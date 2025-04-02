@@ -12081,7 +12081,6 @@ ul {
 }
 .main-hero-section svg path {
   fill: #ffffff;
-  transition: all ease-in-out 0.5s;
 }
 .main-hero-section::after {
   position: absolute;
@@ -12114,7 +12113,7 @@ ul {
 .hero-caption .upload-image button {
   display: flex;
   align-items: center;
-  padding: 0.7rem;
+  padding: 1rem;
   border-radius: 40px;
   background-color: #000000;
   color: #ffffff;
@@ -12125,7 +12124,7 @@ ul {
   font-size: calc(1rem + 0.2vw);
 }
 .hero-caption .upload-image button:hover {
-  padding: 0.7rem 1.5rem;
+  padding: 1rem 1.5rem;
 }
 .hero-caption .herocaption-inner {
   width: 60%;

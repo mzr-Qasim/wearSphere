@@ -71,11 +71,13 @@
 
         path{
             fill: $uni-color-2;
-            transition: all ease-in-out .5s;
-  
+
 
 
         }
+
+
+
 
 
 
@@ -129,7 +131,7 @@
         button{
             display: flex;
             align-items: center;
-            padding: .7rem;
+            padding: 1rem;
             border-radius: 40px;
             background-color: $uni-color-1;
             color: $uni-color-2;
@@ -140,7 +142,7 @@
             }
 
             &:hover{
-                padding: .7rem 1.5rem;
+                padding: 1rem 1.5rem;
             }
 
 
