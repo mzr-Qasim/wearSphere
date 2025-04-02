@@ -1,0 +1,41 @@
+
+
+
+@media (max-width:1200px){
+    
+.main-hero-section{
+    svg{
+        display: none;
+    }
+    .hero-caption{
+        .hero-caption-wrap{
+            flex-direction: column!important;
+            align-items: flex-start;
+            gap: 2rem;
+        }
+    }
+
+}
+}
+
+@media (max-width:991px){
+    
+.main-hero-section{
+
+    img.main-hero-img{
+        object-position: left; /* Directs focus to bottom of image */
+    }
+
+
+}
+    .hero-caption{
+        .herocaption-inner{
+            width: 100%;
+        }
+
+    }
+    
+    
+}
+
+

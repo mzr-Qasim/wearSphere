@@ -1,0 +1,188 @@
+=====================================================
+FASHION AI WEBSITE - FULL GUIDE (No DRF)
+=====================================================
+
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+🔥 𝗠𝗨𝗦𝗧-𝗟𝗘𝗔𝗥𝗡 𝗟𝗜𝗕𝗥𝗔𝗥𝗜𝗘𝗦
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+𝟭. 𝗖𝗢𝗥𝗘 𝗪𝗘𝗕:
+-----------------------------------------------------
+✔️ Django (v4.2+)
+✔️ Pillow (image processing)
+✔️ WhiteNoise (static files)
+
+𝟮. 𝗔𝗜/𝗖𝗢𝗠𝗣𝗨𝗧𝗘𝗥 𝗩𝗜𝗦𝗜𝗢𝗡:
+-----------------------------------------------------
+✔️ OpenCV-python (v4.5+)
+✔️ NumPy (v1.24+)
+✔️ TensorFlow (v2.10+) or PyTorch (optional)
+✔️ MediaPipe (for advanced face detection)
+
+𝟯. 𝗗𝗔𝗧𝗔𝗕𝗔𝗦𝗘:
+-----------------------------------------------------
+✔️ PostgreSQL (production) / SQLite (dev)
+✔️ Django ORM
+
+𝟰. 𝗙𝗥𝗢𝗡𝗧𝗘𝗡𝗗:
+-----------------------------------------------------
+✔️ Bootstrap 5 (optional)
+✔️ Vanilla JavaScript
+
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+𝗙𝗨𝗟𝗟 𝗖𝗢𝗗𝗘 𝗜𝗠𝗣𝗟𝗘𝗠𝗘𝗡𝗧𝗔𝗧𝗜𝗢𝗡
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+𝟭. 𝗠𝗢𝗗𝗘𝗟𝗦.𝗣𝗬:
+-----------------------------------------------------
+from django.db import models
+
+class OutletStock(models.Model):
+    SKIN_TONE_CHOICES = [('L', 'Light'), ('M', 'Medium'), ('D', 'Dark')]
+    GENDER_CHOICES = [('M', 'Male'), ('F', 'Female')]
+    
+    product_id = models.CharField(max_length=50, unique=True)
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
+    skin_tone = models.CharField(max_length=1, choices=SKIN_TONE_CHOICES)
+    image = models.ImageField(upload_to='outlet_stock/')
+    category = models.CharField(max_length=50)
+    is_available = models.BooleanField(default=True)
+
+𝟮. 𝗔𝗜_𝗨𝗧𝗜𝗟𝗦.𝗣𝗬:
+-----------------------------------------------------
+import cv2
+import numpy as np
+from sklearn.cluster import KMeans
+
+def detect_face_attributes(img_path):
+    # Load pre-trained models
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    img = cv2.imread(img_path)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    
+    # Face detection
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+    if len(faces) == 0:
+        return None, None
+    
+    (x,y,w,h) = faces[0]
+    face_roi = img[y:y+h, x:x+w]
+    
+    # Skin tone analysis
+    face_hsv = cv2.cvtColor(face_roi, cv2.COLOR_BGR2HSV)
+    hue_values = face_hsv[:,:,0].flatten()
+    
+    if np.mean(hue_values) < 15:
+        skin_tone = 'D'  # Dark
+    elif np.mean(hue_values) < 25:
+        skin_tone = 'M'  # Medium
+    else:
+        skin_tone = 'L'  # Light
+    
+    # Gender prediction (simplified example)
+    gender = 'F' if w/h > 0.8 else 'M'  # Replace with real model
+    
+    return gender, skin_tone
+
+𝟯. 𝗩𝗜𝗘𝗪𝗦.𝗣𝗬:
+-----------------------------------------------------
+from django.shortcuts import render
+from .models import OutletStock
+from .ai_utils import detect_face_attributes
+import os
+
+def upload_view(request):
+    if request.method == 'POST':
+        # Save uploaded file
+        uploaded_file = request.FILES['image']
+        temp_path = 'temp_upload.jpg'
+        with open(temp_path, 'wb+') as f:
+            for chunk in uploaded_file.chunks():
+                f.write(chunk)
+        
+        # AI Processing
+        gender, skin_tone = detect_face_attributes(temp_path)
+        
+        # Get recommendations
+        recommendations = OutletStock.objects.filter(
+            gender=gender,
+            skin_tone=skin_tone,
+            is_available=True
+        )[:6]
+        
+        # Cleanup
+        os.remove(temp_path)
+        
+        return render(request, 'results.html', {
+            'designs': recommendations,
+            'skin_tone': skin_tone,
+            'gender': gender
+        })
+    
+    return render(request, 'upload.html')
+
+𝟰. 𝗨𝗥𝗟𝗦.𝗣𝗬:
+-----------------------------------------------------
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.upload_view, name='upload'),
+]
+
+𝟱. 𝗧𝗘𝗠𝗣𝗟𝗔𝗧𝗘𝗦:
+-----------------------------------------------------
+<!-- upload.html -->
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <input type="file" name="image" accept="image/*" required>
+  <button type="submit">Analyze Outfits</button>
+</form>
+
+<!-- results.html -->
+<h2>Recommended for {{ gender }} ({{ skin_tone }} skin tone)</h2>
+<div class="row">
+  {% for item in designs %}
+  <div class="col-md-4">
+    <img src="{{ item.image.url }}" style="max-width:200px;">
+    <p>{{ item.product_id }} | {{ item.category }}</p>
+  </div>
+  {% endfor %}
+</div>
+
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+𝗗𝗘𝗣𝗟𝗢𝗬𝗠𝗘𝗡𝗧 𝗦𝗧𝗘𝗣𝗦
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+1. Install requirements:
+pip install django opencv-python numpy pillow
+
+2. Run migrations:
+python manage.py makemigrations
+python manage.py migrate
+
+3. Create admin user:
+python manage.py createsuperuser
+
+4. Add sample products via Django admin:
+http://localhost:8000/admin
+
+5. Run server:
+python manage.py runserver
+
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+𝗧𝗥𝗢𝗨𝗕𝗟𝗘𝗦𝗛𝗢𝗢𝗧𝗜𝗡𝗚 𝗧𝗜𝗣𝗦
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+✔️ If face detection fails:
+   - Try higher quality images
+   - Use MediaPipe for better detection
+
+✔️ For better gender detection:
+   - Train a custom CNN model
+   - Use pre-trained models like:
+     from tensorflow.keras.applications import ResNet50
+
+✔️ To handle heavy traffic:
+   - Use Celery for async processing
+   - Implement caching with Redis
